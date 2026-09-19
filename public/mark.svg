@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="AARVAK">
+  <defs>
+    <linearGradient id="house" x1="18" y1="212" x2="216" y2="42" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7FD3C8"/>
+      <stop offset="0.42" stop-color="#A7DFDA"/>
+      <stop offset="0.72" stop-color="#B9AEF2"/>
+      <stop offset="1" stop-color="#A49AEA"/>
+    </linearGradient>
+    <linearGradient id="blade" x1="96" y1="196" x2="168" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A49AEA"/>
+      <stop offset="1" stop-color="#CFC7FF"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="40" y1="200" x2="150" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A7DFDA"/>
+      <stop offset="1" stop-color="#E8FBF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- The A: one continuous rounded stroke, opening at the lower right so the
+       blade can pass through it. Apex is cut flat, which is where the crossbar
+       reads from at small sizes. -->
+  <path d="M 120 34
+           L 196 196
+           L 150 196"
+        fill="none" stroke="url(#house)" stroke-width="21"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 120 34
+           L 44 196
+           L 104 196"
+        fill="none" stroke="url(#house)" stroke-width="21"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Highlight along the leading edge, so the mark has a light source instead
+       of being flat vector. -->
+  <path d="M 120 44 L 52 190"
+        fill="none" stroke="url(#edge)" stroke-width="5"
+        stroke-linecap="round" opacity="0.55"/>
+
+  <!-- The blade: the inner counter of the A, angled so it reads as forward
+       motion rather than a static crossbar. -->
+  <path d="M 120 96
+           L 158 176
+           L 120 152
+           L 96 176 Z"
+        fill="url(#blade)"/>
+  <path d="M 120 96 L 158 176 L 120 152 Z" fill="#CFC7FF" opacity="0.35"/>
+</svg>

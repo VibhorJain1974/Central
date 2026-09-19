@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.env
+.env.local
+.DS_Store
+*.tsbuildinfo
+
+# Live credentials. Never commit these.
+ENROLMENT-CODES-DO-NOT-COMMIT.txt
+TEST-ACCOUNTS-DO-NOT-COMMIT.md
+
+.vercel
