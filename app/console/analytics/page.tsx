@@ -32,7 +32,15 @@ export default async function Analytics() {
 
   const scores  = ((scoreRes.data  ?? []) as ScoreRow[]).sort((a, b) => b.total_points - a.total_points);
   const preview = ((previewRes.data ?? []) as Preview[]);
-  const deep    = (deepRes.data ?? {}) as AnalyticsDeep;
+  const _d = (deepRes.data ?? {}) as Partial<AnalyticsDeep>;
+  const deep: AnalyticsDeep = {
+    by_team:     _d.by_team     ?? [],
+    by_category: _d.by_category ?? [],
+    by_activity: _d.by_activity ?? [],
+    by_dept:     _d.by_dept     ?? [],
+    top_members: _d.top_members ?? [],
+    adjustments: _d.adjustments ?? [],
+  };
   const topScore = scores[0]?.total_points ?? 1;
 
   const totalSubs    = totalRes.count    ?? 0;

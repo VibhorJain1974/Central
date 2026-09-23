@@ -75,12 +75,19 @@ function deptColor(dept: string, all: string[]) {
 export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
   const [tab, setTab] = useState<Tab>("team");
 
-  const teamMax = Math.max(1, ...data.by_team.map((t) => t.total_points));
-  const catMax  = Math.max(1, ...data.by_category.map((c) => c.approved_points));
-  const actMax  = Math.max(1, ...data.by_activity.map((a) => a.approved_points));
-  const deptMax = Math.max(1, ...data.by_dept.map((d) => d.approved_points));
-  const memMax  = Math.max(1, ...data.top_members.map((m) => m.approved_points));
-  const allDepts = data.by_dept.map((d) => d.dept);
+  const teams    = data.by_team     ?? [];
+  const cats     = data.by_category ?? [];
+  const acts     = data.by_activity ?? [];
+  const depts    = data.by_dept     ?? [];
+  const members  = data.top_members ?? [];
+  const adjs     = data.adjustments ?? [];
+
+  const teamMax = Math.max(1, ...teams.map((t) => t.total_points));
+  const catMax  = Math.max(1, ...cats.map((c) => c.approved_points));
+  const actMax  = Math.max(1, ...acts.map((a) => a.approved_points));
+  const deptMax = Math.max(1, ...depts.map((d) => d.approved_points));
+  const memMax  = Math.max(1, ...members.map((m) => m.approved_points));
+  const allDepts = depts.map((d) => d.dept);
 
   return (
     <div>
@@ -104,7 +111,7 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
       {/* ───────────── BY TEAM ───────────── */}
       {tab === "team" && (
         <div className="space-y-5">
-          {data.by_team.map((t) => {
+          {teams.map((t) => {
             const accent = accentOf(t.slug);
             return (
               <div key={t.team_name}>
@@ -129,7 +136,7 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
               </div>
             );
           })}
-          {data.by_team.length === 0 && <p className="text-ash text-sm">No team data yet.</p>}
+          {teams.length === 0 && <p className="text-ash text-sm">No team data yet.</p>}
         </div>
       )}
 
@@ -138,7 +145,7 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
         <div className="space-y-10">
           {/* category-level rollup */}
           <div className="space-y-5">
-            {data.by_category.map((c) => (
+            {cats.map((c) => (
               <div key={c.category}>
                 <div className="flex items-baseline justify-between gap-4 mb-1">
                   <span className="label text-bone">{CATEGORY_LABEL[c.category] ?? c.category.toUpperCase()}</span>
@@ -156,7 +163,7 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
           <div>
             <h3 className="label text-ash mb-4">ACTIVITY BREAKDOWN</h3>
             <div className="border-t border-line">
-              {data.by_activity.filter((a) => a.count > 0).map((a) => (
+              {acts.filter((a) => a.count > 0).map((a) => (
                 <div key={a.code}
                   className="grid grid-cols-[1fr_auto] gap-4 border-b border-line py-3 items-center">
                   <div>
@@ -172,7 +179,7 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
                   </div>
                 </div>
               ))}
-              {data.by_activity.filter((a) => a.count > 0).length === 0 && (
+              {acts.filter((a) => a.count > 0).length === 0 && (
                 <p className="py-6 text-ash text-sm">Nothing approved yet.</p>
               )}
             </div>
@@ -183,7 +190,7 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
       {/* ───────────── BY DEPT ───────────── */}
       {tab === "dept" && (
         <div className="space-y-5">
-          {data.by_dept.map((d) => {
+          {depts.map((d) => {
             const color = deptColor(d.dept, allDepts);
             return (
               <div key={d.dept}>
@@ -199,17 +206,17 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
               </div>
             );
           })}
-          {data.by_dept.length === 0 && <p className="text-ash text-sm">No department data yet.</p>}
+          {depts.length === 0 && <p className="text-ash text-sm">No department data yet.</p>}
         </div>
       )}
 
       {/* ───────────── BY MEMBER ───────────── */}
       {tab === "member" && (
         <div className="border-t border-line">
-          {data.top_members.length === 0 && (
+          {members.length === 0 && (
             <p className="py-6 text-ash text-sm">No approved points yet.</p>
           )}
-          {data.top_members.map((m, i) => {
+          {members.map((m, i) => {
             const accent = accentOf(m.team_slug);
             return (
               <div key={i}
@@ -236,10 +243,10 @@ export function AnalyticsTabs({ data }: { data: AnalyticsDeep }) {
       {/* ───────────── ADJUSTMENTS ───────────── */}
       {tab === "adj" && (
         <div className="border-t border-line">
-          {data.adjustments.length === 0 && (
+          {adjs.length === 0 && (
             <p className="py-6 text-ash text-sm">No adjustments on record.</p>
           )}
-          {data.adjustments.map((a, i) => {
+          {adjs.map((a, i) => {
             const accent = accentOf(a.team_slug);
             return (
               <div key={i}
