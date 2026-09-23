@@ -249,14 +249,22 @@ function ProofCard({ p, n }: { p: Proof; n: number }) {
   const isImg = /\.(png|jpe?g|gif|webp|avif|bmp)$/.test(clean);
   const isPdf = /\.pdf$/.test(clean);
   const name = p.filename ?? `PROOF ${n}`;
+  const [imgBroken, setImgBroken] = useState(false);
 
   return (
     <a href={url} target="_blank" rel="noreferrer"
        className="group block border border-line bg-panel hover:border-mint transition-colors overflow-hidden">
       <div className="h-40 bg-ink flex items-center justify-center overflow-hidden">
-        {isImg ? (
+        {isImg && !imgBroken ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt={name} className="h-full w-full object-cover group-hover:opacity-90 transition-opacity" />
+          <img src={url} alt={name} className="h-full w-full object-cover group-hover:opacity-90 transition-opacity"
+               onError={() => setImgBroken(true)} />
+        ) : isImg && imgBroken ? (
+          <div className="text-center px-4">
+            <div className="figure text-[30px] text-[#41434a]">IMG</div>
+            <div className="label mt-2 text-[#F0A9A4]">PROOF UNAVAILABLE</div>
+            <div className="label mt-1 text-[#41434a]">CLICK TO TRY LINK DIRECTLY</div>
+          </div>
         ) : (
           <div className="text-center px-4">
             <div className="figure text-[30px] text-slate group-hover:text-mint transition-colors">
