@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase-server";
 import { accentOf } from "@/lib/types";
 import type { Access, ScoreRow } from "@/lib/types";
+import { AnalyticsTabs } from "./AnalyticsTabs";
+import type { AnalyticsDeep } from "./AnalyticsTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -13,33 +15,34 @@ export default async function Analytics() {
   const { data: accessData } = await supabase.rpc("my_access");
   const access = accessData as Access | null;
 
-  // Only em_head and secretary can see this page
   if (access?.staff_role !== "em_head" && access?.staff_role !== "secretary") {
     redirect("/console");
   }
 
-  const [scoreRes, previewRes, totalRes, pendingRes, verifiedRes, rejectedRes] = await Promise.all([
-    supabase.rpc("get_scoreboard"),
-    supabase.rpc("preview_publish"),
-    supabase.from("submissions").select("id", { count: "exact", head: true }),
-    supabase.from("submissions").select("id", { count: "exact", head: true }).eq("team_status", "pending"),
-    supabase.from("submissions").select("id", { count: "exact", head: true }).eq("team_status", "verified"),
-    supabase.from("submissions").select("id", { count: "exact", head: true }).eq("team_status", "rejected"),
-  ]);
+  const [scoreRes, previewRes, totalRes, pendingRes, verifiedRes, rejectedRes, deepRes] =
+    await Promise.all([
+      supabase.rpc("get_scoreboard"),
+      supabase.rpc("preview_publish"),
+      supabase.from("submissions").select("id", { count: "exact", head: true }),
+      supabase.from("submissions").select("id", { count: "exact", head: true }).eq("team_status", "pending"),
+      supabase.from("submissions").select("id", { count: "exact", head: true }).eq("team_status", "verified"),
+      supabase.from("submissions").select("id", { count: "exact", head: true }).eq("team_status", "rejected"),
+      supabase.rpc("analytics_deep"),
+    ]);
 
-  const scores = ((scoreRes.data ?? []) as ScoreRow[]).sort((a, b) => b.total_points - a.total_points);
+  const scores  = ((scoreRes.data  ?? []) as ScoreRow[]).sort((a, b) => b.total_points - a.total_points);
   const preview = ((previewRes.data ?? []) as Preview[]);
+  const deep    = (deepRes.data ?? {}) as AnalyticsDeep;
   const topScore = scores[0]?.total_points ?? 1;
 
-  const totalSubs    = totalRes.count ?? 0;
-  const pendingSubs  = pendingRes.count ?? 0;
+  const totalSubs    = totalRes.count    ?? 0;
+  const pendingSubs  = pendingRes.count  ?? 0;
   const verifiedSubs = verifiedRes.count ?? 0;
   const rejectedSubs = rejectedRes.count ?? 0;
 
   const totalApproved = scores.reduce((s, t) => s + t.approved_points, 0);
   const totalPending  = scores.reduce((s, t) => s + t.pending_central, 0);
   const totalAdj      = scores.reduce((s, t) => s + t.adjustment_points, 0);
-
   const drift = preview.some((p) => p.change !== 0);
 
   return (
@@ -51,7 +54,7 @@ export default async function Analytics() {
           HOW IT LOOKS
         </h1>
         <p className="mt-4 max-w-2xl text-ash leading-relaxed">
-          Live numbers across all five teams. This is the unfiltered count, not the published board.
+          Live numbers across all five teams. Unfiltered. Drill into teams, departments, categories, or members below.
         </p>
       </div>
 
@@ -74,7 +77,7 @@ export default async function Analytics() {
             const changed = p.change !== 0;
             return (
               <div key={p.team_name}
-                   className="grid grid-cols-[1fr_auto_auto_auto] gap-6 items-center border-b border-line py-4">
+                className="grid grid-cols-[1fr_auto_auto_auto] gap-6 items-center border-b border-line py-4">
                 <span className="font-display font-bold text-[18px] tracking-tight">{p.team_name}</span>
                 <div className="text-right hidden sm:block">
                   <div className="font-mono text-[13px] text-ash">PUBLISHED</div>
@@ -87,7 +90,7 @@ export default async function Analytics() {
                 <div className="text-right">
                   <div className="font-mono text-[13px] text-ash">CHANGE</div>
                   <div className="font-mono text-[20px]"
-                       style={{ color: changed ? (p.change > 0 ? "#A7DFDA" : "#F0A9A4") : "#41434A" }}>
+                    style={{ color: changed ? (p.change > 0 ? "#A7DFDA" : "#F0A9A4") : "#41434A" }}>
                     {p.change > 0 ? `+${p.change}` : p.change === 0 ? "—" : String(p.change)}
                   </div>
                 </div>
@@ -97,55 +100,24 @@ export default async function Analytics() {
         </div>
       </section>
 
-      {/* team scores bar chart */}
-      <section>
-        <h2 className="font-display font-bold text-[26px] tracking-tight">LIVE TEAM SCORES</h2>
-        <p className="mt-1 text-ash text-sm">Approved points plus adjustments. Not the published board.</p>
-        <div className="mt-6 space-y-5">
-          {scores.map((t) => (
-            <div key={t.team_id}>
-              <div className="flex items-baseline justify-between gap-4 mb-2">
-                <div className="flex items-center gap-2.5">
-                  <i className="w-[8px] h-[8px] shrink-0" style={{ background: accentOf(t.slug) }} />
-                  <span className="label text-bone">{t.name}</span>
-                  {t.pending_central > 0 && (
-                    <span className="label text-mint">{t.pending_central} WAITING</span>
-                  )}
-                </div>
-                <span className="font-mono text-[13px] text-ash">
-                  {t.approved_points} approved
-                  {t.adjustment_points !== 0 && (
-                    <span style={{ color: t.adjustment_points > 0 ? "#A7DFDA" : "#F0A9A4" }}>
-                      {" "}{t.adjustment_points > 0 ? "+" : ""}{t.adjustment_points} adj
-                    </span>
-                  )}
-                  <span className="text-bone"> = {t.total_points} pts</span>
-                </span>
-              </div>
-              <div className="h-[10px] bg-panel border border-line overflow-hidden">
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${Math.max(2, topScore ? (t.total_points / topScore) * 100 : 2)}%`,
-                    background: accentOf(t.slug),
-                    opacity: 0.85,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* submission pipeline */}
       <section>
         <h2 className="font-display font-bold text-[26px] tracking-tight">SUBMISSION PIPELINE</h2>
         <p className="mt-1 text-ash text-sm">Where every submission currently sits across all teams.</p>
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-px bg-line border border-line">
-          <PipelineTile label="NOT VERIFIED YET" count={pendingSubs} total={totalSubs} color="#616264" />
+          <PipelineTile label="NOT VERIFIED YET" count={pendingSubs}  total={totalSubs} color="#616264" />
           <PipelineTile label="VERIFIED BY LEAD" count={verifiedSubs} total={totalSubs} color="#A7DFDA" />
           <PipelineTile label="REJECTED BY LEAD" count={rejectedSubs} total={totalSubs} color="#F0A9A4" />
-          <PipelineTile label="TOTAL ON RECORD" count={totalSubs} total={totalSubs} color="#A49AEA" bold />
+          <PipelineTile label="TOTAL ON RECORD"  count={totalSubs}    total={totalSubs} color="#A49AEA" bold />
+        </div>
+      </section>
+
+      {/* deep analytics tabs */}
+      <section>
+        <h2 className="font-display font-bold text-[26px] tracking-tight">DEEP BREAKDOWN</h2>
+        <p className="mt-1 text-ash text-sm">Switch between team, category, department, member, and adjustment views.</p>
+        <div className="mt-6">
+          <AnalyticsTabs data={deep} />
         </div>
       </section>
     </div>
@@ -157,7 +129,7 @@ function Tile({ k, v, s, accent }: { k: string; v: string; s: string; accent?: b
     <div className="bg-ink p-5">
       <div className={`label ${accent ? "text-mint" : ""}`}>{k}</div>
       <div className="font-display font-bold text-[32px] leading-none tracking-tight mt-3 truncate"
-           style={accent ? { color: "#A7DFDA" } : undefined}>{v}</div>
+        style={accent ? { color: "#A7DFDA" } : undefined}>{v}</div>
       <div className="mt-2 text-[12px] text-slate leading-snug">{s}</div>
     </div>
   );
@@ -171,7 +143,7 @@ function PipelineTile({ label, count, total, color, bold }: {
     <div className="bg-ink p-5">
       <div className="label" style={{ color }}>{label}</div>
       <div className="font-display font-bold text-[30px] leading-none tracking-tight mt-3"
-           style={bold ? { color } : undefined}>{count}</div>
+        style={bold ? { color } : undefined}>{count}</div>
       <div className="mt-2 text-[12px] text-slate">{pct}% of total</div>
     </div>
   );
