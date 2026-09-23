@@ -77,9 +77,10 @@ export default async function MyTeam() {
 
       {/* --------------------------------------------------------- tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line stagger">
-        <Tile k="LIVE TOTAL" v={String(o?.live_points ?? 0)} s="approved plus adjustments, right now" accent={accent} />
-        <Tile k="ON THE PUBLIC BOARD" v={String(o?.published?.points ?? 0)}
-              s={o?.published ? `rank ${o.published.rank} · signed ${day(o.published.at)}` : "nothing published yet"} />
+        <Tile k="POINTS ON BOARD" v={String(o?.published?.points ?? 0)}
+              s={o?.published ? `rank ${o.published.rank} · signed ${day(o.published.at)}` : "nothing published yet"}
+              accent={accent} />
+        <Tile k="APPROVED ENTRIES" v={String(o?.counts.approved ?? 0)} s="accepted by central so far" />
         <Tile k="WAITING ON ORGANISERS" v={String(o?.counts.waiting ?? 0)} s="you verified it, central has not decided" />
         <Tile k="NOT YET VERIFIED BY YOU" v={String(o?.counts.unverified ?? 0)} s="sitting on your own site" />
       </div>

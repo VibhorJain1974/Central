@@ -7,6 +7,7 @@ import type { Access } from "@/lib/types";
 
 export function ConsoleNav({ access }: { access: Access }) {
   const path = usePathname();
+  const canSeeAnalytics = access.staff_role === "em_head" || access.staff_role === "secretary";
   const items: { href: string; label: string; show: boolean }[] = [
     { href: "/console", label: "OVERVIEW", show: true },
     { href: "/console/team", label: "MY TEAM", show: !!access.lead_of },
@@ -14,6 +15,7 @@ export function ConsoleNav({ access }: { access: Access }) {
     { href: "/console/adjust", label: "ADJUST", show: access.can_approve },
     { href: "/console/publish", label: "PUBLISH", show: access.can_publish },
     { href: "/console/members", label: "MEMBERS", show: access.can_view_all },
+    { href: "/console/analytics", label: "ANALYTICS", show: canSeeAnalytics },
     { href: "/console/health", label: "FEEDS", show: access.can_view_all },
   ];
 
